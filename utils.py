@@ -1,6 +1,6 @@
 import platform
 from datetime import datetime
-from typing import TypeVar, Union, Tuple, Any, Collection, Callable
+from typing import TypeVar, Union, Tuple, Any, Collection, Callable, List
 from functools import wraps
 
 T = TypeVar('T')
@@ -10,8 +10,10 @@ __all__ = [
     'require_not_none',
     'require_not_none_else',
     'parse_datetime',
+    'get_system_name',
     'check_system',
-    'join'
+    'join',
+    'get_start_command'
 ]
 
 def is_not_empty(obj: Any) -> bool:
@@ -38,13 +40,21 @@ def parse_datetime(time: Union[str, datetime], formats: str = None) -> datetime:
         return datetime.strptime(time, formats)
     raise TypeError(f'cannot parsing time type: {type(time)}')
 
-def check_system(target: str) -> Callable:
+def get_system_name():
+    """Returns the current machine's operating system name."""
+    return platform.system().lower()
+
+def check_system(target: Union[str, List[str]]) -> Callable:
     """Check whether the system is running on the target system."""
+    if isinstance(target, str):
+        target = [target]
+    target = [e.lower() for e in target]
+
     def _check_system(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
-            msg = f'the system {platform.system()} is not supported'
-            assert platform.system().lower() == target.lower(), msg
+            msg = f'the system {get_system_name()} is not supported'
+            assert get_system_name() in target, msg
             return func(*args, **kwargs)
         return wrapper
     return _check_system
@@ -53,3 +63,11 @@ def join(*args: Tuple[str], separator: str = None) -> str:
     """Concat a string sequence orderly using a given separator, which default is space."""
     separator = require_not_none_else(separator, ' ')
     return separator.join(filter(lambda e: is_not_empty(e), args))
+
+def get_start_command():
+    """Returns a start command for executing a program installed on the current machine."""
+    if get_system_name() == 'windows':
+        return 'start'
+    if get_system_name() == 'darwin':
+        return 'open'
+    raise RuntimeError(f'Unknown command on the OS: {get_system_name()}')

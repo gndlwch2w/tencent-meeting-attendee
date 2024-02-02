@@ -1,6 +1,6 @@
 # Tencent Meeting Attendee
 
-Automatically join a tencent meeting based on the tencent meeting code.
+Automatically join a tencent meeting based on the tencent meeting code. [**Supports Windows and macOS**]
 
 ### Get started
 
